@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Комікс Хаб</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #050505;
+            z-index: 10;
+        }
+
+        .glass {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comic-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .comic-card:hover {
+            transform: translateY(-8px) scale(1.03);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reader-frame-container {
+            width: 100%;
+            height: calc(100vh - 70px);
+            background: #111;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn-red {
+            background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.4);
+            transition: all 0.2s;
+        }
+
+        .btn-red:active {
+            transform: scale(0.95);
+        }
+
+        /* Стиль для завантажувача */
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ЕКРАН 1: БІБЛІОТЕКА -->
+    <div id="library-screen" class="screen p-6 md:p-12 fade-in">
+        <header class="max-w-7xl mx-auto mb-12 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">МОЯ <span class="text-red-600">ПОЛИЦЯ</span></h1>
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Ваша колекція історій</p>
+            </div>
+            <div class="hidden md:block">
+                <div class="text-red-500 font-black italic tracking-widest text-right">ULTRA HD<br><span class="text-white text-[10px] opacity-50">READER v2.0</span></div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <!-- Комікс -->
+            <div onclick="showDetails('warrior')" class="comic-card cursor-pointer group">
+                <div class="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl mb-4">
+                    <img src="https://i.postimg.cc/Kvb4g7hR/image.jpg" alt="Обкладинка коміксу" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="bg-white text-black px-6 py-2 rounded-full font-bold text-xs uppercase italic tracking-tighter">Читати</span>
+                    </div>
+                </div>
+                <h3 class="font-black uppercase italic tracking-tight text-xl">Сніг що мовчить</h3>
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Розділ 1 • PDF</p>
+            </div>
+
+            <!-- Заглушка -->
+            <div class="opacity-10 pointer-events-none">
+                <div class="aspect-[2/3] rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center">
+                    <span class="text-zinc-500 text-xs font-bold uppercase">Далі буде...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ЕКРАН 2: ДЕТАЛІ -->
+    <div id="details-screen" class="screen hidden flex items-center justify-center p-6 fade-in">
+        <div class="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="flex justify-center">
+                <img id="detail-img" class="w-72 md:w-96 rounded-2xl shadow-[0_0_50px_rgba(225,29,72,0.2)] border border-white/10">
+            </div>
+            <div class="space-y-8">
+                <button onclick="showLibrary()" class="text-zinc-500 hover:text-white flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all">
+                    ← Назад до полиці
+                </button>
+                <h1 id="detail-title" class="text-5xl md:text-8xl font-black italic uppercase leading-none tracking-tighter text-white"></h1>
+                <p id="detail-desc" class="text-zinc-400 text-base leading-relaxed max-w-md"></p>
+                <div class="pt-4">
+                    <button onclick="openReader()" class="btn-red px-14 py-6 rounded-2xl font-black text-2xl uppercase italic tracking-tight w-full sm:w-auto">
+                        Відкрити Комікс
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ЕКРАН 3: ЧИТАЧ PDF -->
+    <div id="reader-view" class="screen hidden z-50 overflow-hidden">
+        <div class="h-[70px] glass px-6 flex items-center justify-between">
+            <button onclick="closeReader()" class="text-zinc-400 hover:text-white font-bold uppercase text-[10px] tracking-widest flex items-center gap-2 transition-colors">
+                ✕ Закрити читалку
+            </button>
+            <div class="text-center">
+                <h3 id="reader-title" class="text-red-500 font-black italic text-sm uppercase tracking-tighter"></h3>
+                <p class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.3em]">Режим перегляду HD</p>
+            </div>
+            <div class="w-20"></div>
+        </div>
+        <div class="reader-frame-container">
+            <div class="loader text-zinc-700 font-bold uppercase text-xs animate-pulse">Завантаження сторінок...</div>
+            <div id="pdf-container" class="h-full w-full">
+                <!-- Iframe вставляється через JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COMICS = {
+            'warrior': {
+                title: 'Сніг що мовчить',
+                desc: 'Це історія про самотність, біль і надію під час холодної зими.',
+                cover: "https://i.postimg.cc/Kvb4g7hR/image.jpg",
+                // Ваше пряме посилання на PDF
+                pdf: "https://files.catbox.moe/e7x465.pdf"
+            }
+        };
+
+        let activeComic = null;
+
+        function showDetails(id) {
+            activeComic = COMICS[id];
+            document.getElementById('library-screen').classList.add('hidden');
+            document.getElementById('details-screen').classList.remove('hidden');
+            
+            document.getElementById('detail-title').innerText = activeComic.title;
+            document.getElementById('detail-desc').innerText = activeComic.desc;
+            document.getElementById('detail-img').src = activeComic.cover;
+            window.scrollTo(0,0);
+        }
+
+        function showLibrary() {
+            document.getElementById('details-screen').classList.add('hidden');
+            document.getElementById('library-screen').classList.remove('hidden');
+        }
+
+        function openReader() {
+            document.getElementById('details-screen').classList.add('hidden');
+            document.getElementById('reader-view').classList.remove('hidden');
+            document.getElementById('reader-title').innerText = activeComic.title;
+            
+            // Використовуємо Google Docs Viewer для стабільності на мобільних пристроях
+            const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(activeComic.pdf)}&embedded=true`;
+            
+            const container = document.getElementById('pdf-container');
+            container.innerHTML = `<iframe src="${viewerUrl}" allowfullscreen></iframe>`;
+        }
+
+        function closeReader() {
+            document.getElementById('reader-view').classList.add('hidden');
+            document.getElementById('details-screen').classList.remove('hidden');
+            document.getElementById('pdf-container').innerHTML = ''; // Очищення пам'яті та зупинка завантаження
+        }
+    </script>
+</body>
+</html>
+
+
