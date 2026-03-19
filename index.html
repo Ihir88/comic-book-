@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -180,9 +179,14 @@
                 desc: 'Містична зустріч на межі реальності. Хто вона — привид минулого чи цифрове майбутнє?',
                 cover: "https://i.postimg.cc/HsbTg1BS/file-00000000fb1871f4a9573086ea3d261f.png",  
  pdf: "https://dl.dropboxusercontent.com/scl/fi/tb8240i4bqs5ckv73v8ov/merged-pdf.io-5.pdf?rlkey=j18ycz6drgph9ygksa062wxb7&dl=1"  
+             },
+            'c4': {
+                title: 'Лунна мелодія',
+                desc: 'Головна героїня — Гунна дівчина з довгим фіолетово-срібним волоссям',
+                cover: "https://i.postimg.cc/90s8Dg2B/image-10.jpg",
+                pdf: "https://www.dropbox.com/scl/fi/y5hheux5qmbzgdhgtn8wc/merged-pdf.io-7.pdf?rlkey=fhtthi93ged104doo5fpph2gq&dl=1"
             }
         };
-
         let activeComic = null;
 
         function renderLibrary() {
@@ -276,4 +280,285 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Комікс Хаб</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            min-height: 100vh;
+            background-color: #050505;
+            transition: opacity 0.3s ease;
+        }
+
+        .glass {
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comic-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .comic-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            filter: brightness(1.2);
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .reader-container {
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #111;
+            padding: 20px 0;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn-red {
+            background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-red:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(225, 29, 72, 0.5); }
+        .btn-red:active { transform: scale(0.95); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #e11d48; }
+        
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" class="hidden">
+        <div class="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-red-500 font-bold uppercase tracking-widest text-xs">Завантаження сторінок...</p>
+    </div>
+
+    <!-- LIBRARY -->
+    <div id="library-screen" class="screen p-6 md:p-12 fade-in">
+        <header class="max-w-7xl mx-auto mb-12 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">МОЯ <span class="text-red-600">ПОЛИЦЯ</span></h1>
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Ваша цифрова колекція</p>
+            </div>
+            <div class="hidden md:block text-right">
+                <div class="text-red-500 font-black italic tracking-widest">WEB READER<br><span class="text-white text-[10px] opacity-50">v3.0 ENGINE</span></div>
+            </div>
+        </header>
+
+        <div id="comics-grid" class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+            <!-- Content via JS -->
+        </div>
+    </div>
+
+    <!-- DETAILS -->
+    <div id="details-screen" class="screen hidden flex items-center justify-center p-6 fade-in">
+        <div class="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="flex justify-center">
+                <div class="relative group">
+                    <img id="detail-img" class="w-64 md:w-80 rounded-2xl shadow-2xl border border-white/10 object-cover aspect-[2/3]">
+                    <div class="absolute -inset-4 bg-red-600/20 blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+            </div>
+            <div class="space-y-6">
+                <button onclick="showLibrary()" class="text-zinc-500 hover:text-white flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all">
+                    ← Повернутись до списку
+                </button>
+                <h1 id="detail-title" class="text-4xl md:text-7xl font-black italic uppercase leading-none tracking-tighter text-white"></h1>
+                <p id="detail-desc" class="text-zinc-400 text-sm md:text-base leading-relaxed max-w-md"></p>
+                <div class="pt-6">
+                    <button onclick="openReader()" class="btn-red px-10 py-5 rounded-xl font-black text-xl uppercase italic tracking-tight w-full sm:w-auto">
+                        Почати читання
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- READER -->
+    <div id="reader-view" class="screen hidden fixed inset-0 z-50 flex flex-col">
+        <div class="h-[70px] glass px-6 flex items-center justify-between shrink-0">
+            <button onclick="closeReader()" class="text-zinc-400 hover:text-white font-bold uppercase text-[10px] tracking-widest flex items-center gap-2 transition-colors">
+                ✕ Вийти
+            </button>
+            <div class="text-center">
+                <h3 id="reader-title" class="text-red-500 font-black italic text-sm uppercase tracking-tighter"></h3>
+                <p id="page-count" class="text-[8px] text-zinc-500 uppercase font-bold tracking-[0.3em]">Завантаження...</p>
+            </div>
+            <div class="w-10 md:w-20"></div>
+        </div>
+        <div id="pdf-viewer" class="reader-container">
+            <!-- PDF Canvases will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // PDF.js worker setup
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const COMICS = {
+            'warrior': {
+                title: 'Сніг що мовчить',
+                desc: 'Після того як Аня знайомиться з новою людиною в парку, вона спочатку мовчить. Їй незручно і трохи страшно відкриватися.',
+                cover: "https://i.postimg.cc/Kvb4g7hR/image.jpg",
+                pdf: "https://dl.dropboxusercontent.com/scl/fi/dgycdsmz582ojvwmp6i87/merged-pdf.io-6.pdf?rlkey=5atxw1wh80jpcb0rcsx57asb8&dl=1"
+            },
+            'boy': {
+                title: 'Хлопчик',
+                desc: 'Зворушлива історія дорослішання, що фокусується на дрібницях життя та справжній дружбі.',
+                cover: "https://i.postimg.cc/Gm62X5mk/image-1.jpg",
+                pdf: "https://dl.dropboxusercontent.com/scl/fi/dgycdsmz582ojvwmp6i87/merged-pdf.io-6.pdf?rlkey=5atxw1wh80jpcb0rcsx57asb8&dl=1"
+            },
+            'between': {
+                title: 'На гілці між світами',
+                desc: 'Містична зустріч на межі реальності. Хто вона — привид минулого чи цифрове майбутнє?',
+                cover: "https://i.postimg.cc/HsbTg1BS/file-00000000fb1871f4a9573086ea3d261f.png",  
+ pdf: "https://dl.dropboxusercontent.com/scl/fi/tb8240i4bqs5ckv73v8ov/merged-pdf.io-5.pdf?rlkey=j18ycz6drgph9ygksa062wxb7&dl=1"  
+             },
+            'c4': {
+                title: 'Лунна мелодія',
+                desc: 'Головна героїня — Гунна дівчина з довгим фіолетово-срібним волоссям',
+                cover: "https://i.postimg.cc/90s8Dg2B/image-10.jpg",
+                pdf: "https://www.dropbox.com/scl/fi/y5hheux5qmbzgdhgtn8wc/merged-pdf.io-7.pdf?rlkey=fhtthi93ged104doo5fpph2gq&dl=1"
+            }
+        };
+        let activeComic = null;
+
+        function renderLibrary() {
+            const grid = document.getElementById('comics-grid');
+            grid.innerHTML = '';
+            Object.keys(COMICS).forEach(id => {
+                const comic = COMICS[id];
+                grid.innerHTML += `
+                    <div onclick="showDetails('${id}')" class="comic-card cursor-pointer group">
+                        <div class="relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 shadow-2xl mb-4 bg-zinc-900">
+                            <img src="${comic.cover}" alt="${comic.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                        </div>
+                        <h3 class="font-black uppercase italic tracking-tight text-lg md:text-xl truncate">${comic.title}</h3>
+                        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-1">Комікс</p>
+                    </div>
+                `;
+            });
+        }
+
+        function showDetails(id) {
+            activeComic = COMICS[id];
+            document.getElementById('library-screen').classList.add('hidden');
+            document.getElementById('details-screen').classList.remove('hidden');
+            document.getElementById('detail-title').innerText = activeComic.title;
+            document.getElementById('detail-desc').innerText = activeComic.desc;
+            document.getElementById('detail-img').src = activeComic.cover;
+            window.scrollTo(0,0);
+        }
+
+        function showLibrary() {
+            document.getElementById('details-screen').classList.add('hidden');
+            document.getElementById('library-screen').classList.remove('hidden');
+        }
+
+        async function openReader() {
+            const overlay = document.getElementById('loading-overlay');
+            const viewer = document.getElementById('pdf-viewer');
+            const pageInfo = document.getElementById('page-count');
+            
+            overlay.classList.remove('hidden');
+            document.getElementById('details-screen').classList.add('hidden');
+            document.getElementById('reader-view').classList.remove('hidden');
+            document.getElementById('reader-title').innerText = activeComic.title;
+            viewer.innerHTML = '';
+
+            try {
+                // Fetch PDF using proxy-friendly headers if needed, but PDF.js handles most URLs
+                const loadingTask = pdfjsLib.getDocument(activeComic.pdf);
+                const pdf = await loadingTask.promise;
+                
+                pageInfo.innerText = `${pdf.numPages} СТОРІНОК`;
+
+                // Render all pages for a smooth scrolling experience
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: window.innerWidth < 768 ? 1.0 : 1.5 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+
+                    viewer.appendChild(canvas);
+                    
+                    // Hide loading after first page renders for perceived speed
+                    if(pageNum === 1) overlay.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("PDF Load Error:", error);
+                overlay.classList.add('hidden');
+                viewer.innerHTML = `<div class="p-10 text-center text-red-500 font-bold">
+                    ПОМИЛКА ЗАВАНТАЖЕННЯ.<br>
+                    <span class="text-white text-xs opacity-50">Можливо, файл заблоковано сервером або немає інтернету.</span>
+                </div>`;
+            }
+        }
+
+        function closeReader() {
+            document.getElementById('reader-view').classList.add('hidden');
+            document.getElementById('details-screen').classList.remove('hidden');
+            document.getElementById('pdf-viewer').innerHTML = '';
+        }
+
+        window.onload = renderLibrary;
+    </script>
+</body>
+</html>
